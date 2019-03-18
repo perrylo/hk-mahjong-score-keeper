@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <link href='https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons' rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <style>
+    body { background: #efefef; }
+
+    .unselectable {
+      -webkit-user-select: none; /* Safari */
+      -moz-user-select: none; /* Firefox */
+      -ms-user-select: none; /* IE10+/Edge */
+      user-select: none; /* Standard */
+    }
+
+    .fanSelector button * { font-weight:bold; }
+
+    /* Enter and leave animations can use different */
+    /* durations and timing functions.              */
+    .slide-fade-enter-active {
+      transition: all .3s ease;
+    }
+    .slide-fade-leave-active {
+      transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+    }
+    .slide-fade-enter, .slide-fade-leave-to
+    /* .slide-fade-leave-active below version 2.1.8 */ {
+      transform: translateX(10px);
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
+
+
+<!-- Main App Instance -->
+<div id="app"></div>
+
+<script id="appTemplate" type="text/x-template">
+  <v-container grid-list-lg>
+    <v-layout align-content-space-around wrap>
+
+      <transition name="slide-fade">
+        <v-flex v-if="!isNameEntryDone">
+          <v-layout align-content-space-around wrap>
+            <v-flex lg6 offset-lg3 md8 offset-md2 sm12 my-5>
+              <span class="display-1">Perry's Mahjong Score Keeper</span>
+            </v-flex>
+            <v-flex lg6 offset-lg3 md8 offset-md2 sm12>
+              <span class="title">Enter Player Names</span>
+            </v-flex>
+            <v-flex lg6 offset-lg3 md8 offset-md2 sm12>
+              <v-text-field label="Player 1" v-model="players[0].name" box class="title"></v-text-field>
+              <v-text-field label="Player 2" v-model="players[1].name" box class="title"></v-text-field>
+              <v-text-field label="Player 3" v-model="players[2].name" box class="title"></v-text-field>
+              <v-text-field label="Player 4" v-model="players[3].name" box class="title"></v-text-field>
+              <v-btn block class="title" color="blue" large @click="isNameEntryDone=true">Begin Scoring</v-btn>
+            </v-flex>
+            <v-divider></v-divider>
+            <v-flex lg6 offset-lg3 md8 offset-md2 sm12 my-5>
+              <span class="caption">Scoring based on <a href="https://en.wikipedia.org/wiki/Hong_Kong_Mahjong_scoring_rules" target="_blank">Hong Kong style rules</a>.</span>
+            </v-flex>
+          </v-layout>
+        </v-flex>
+        <v-flex v-else>
+          <v-layout align-content-space-around wrap>
+            <v-flex lg12 md12 sm12 xs12>
+              <span class="display-1">{{title}}</span>
+            </v-flex>
+            <PlayerCard v-for="p in players" :key="p.id" :player="p" @selectPlayer="selectPlayer" />
+            <v-divider></v-divider>
+            <v-flex lg12 md12 sm12 xs12>
+              <span class="display-1">Score History</span>
+            </v-flex>
+            <v-flex lg12 md12 sm12 xs12>
+              <v-data-table
+                :headers="headers"
+                :items="scoreHistory"
+                class="elevation-1"
+              >
+                <template slot="items" slot-scope="props">
+                  <td>{{ props.item.name }}</td>
+                  <td class="text-xs-right">{{ props.item.round }}</td>
+                  <td class="text-xs-right">{{ props.item.p1score }}</td>
+                  <td class="text-xs-right">{{ props.item.p2score }}</td>
+                  <td class="text-xs-right">{{ props.item.p3score }}</td>
+                  <td class="text-xs-right">{{ props.item.p4score }}</td>
+                </template>
+              </v-data-table>
+            </v-flex>
+          </v-layout>
+        </v-flex>
+      </transition>
+
+
+      <v-dialog v-model="dialog" max-width="305px" persistent>
+        <v-card>
+          <v-card-title class="headline">How many points</v-card-title>
+          <v-card-text class="fanSelector">
+            <v-btn class="display-1" color="grey" large block round outline @click="selectedFan=0; dialog=false; scoreRound()">0</v-btn>
+            <v-btn class="display-1" color="green lighten-2" large fab outline @click="selectedFan=1; dialog=false; scoreRound()">1</v-btn>
+            <v-btn class="display-1" color="green lighten-2" large fab outline @click="selectedFan=2; dialog=false; scoreRound()">2</v-btn>
+            <v-btn class="display-1" color="green lighten-2" large fab outline @click="selectedFan=3; dialog=false; scoreRound()">3</v-btn>
+            <v-btn class="display-1" color="green" large fab outline @click="selectedFan=4; dialog=false; scoreRound()">4</v-btn>
+            <v-btn class="display-1" color="green" large fab outline @click="selectedFan=5; dialog=false; scoreRound()">5</v-btn>
+            <v-btn class="display-1" color="green" large fab outline @click="selectedFan=6; dialog=false; scoreRound()">6</v-btn>
+            <v-btn class="display-1" color="orange" large fab outline @click="selectedFan=7; dialog=false; scoreRound()">7</v-btn>
+            <v-btn class="display-1" color="orange" large fab outline @click="selectedFan=8; dialog=false; scoreRound()">8</v-btn>
+            <v-btn class="display-1" color="orange" large fab outline @click="selectedFan=9; dialog=false; scoreRound()">9</v-btn>
+            <v-btn class="display-1" color="red" large fab outline @click="selectedFan=10; dialog=false; scoreRound()">10</v-btn>
+            <v-btn class="display-1" color="red" large fab outline @click="selectedFan=11; dialog=false; scoreRound()">11</v-btn>
+            <v-btn class="display-1" color="red" large fab outline @click="selectedFan=12; dialog=false; scoreRound()">12+</v-btn>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
+
+    </v-layout>
+  </v-container>
+</script>
+
+<script id="playerCardTemplate" type="text/x-template">
+  <v-flex xs12 sm3 md3 lg3>
+    <v-card @click="$emit('selectPlayer', player)" :color="player.isWinner?'green lighten-2':player.isLoser?'red lighten-2':''">
+      <v-card-title>
+        <h1 class="display-3 unselectable">{{player.score}}</h1>
+      </v-card-title>
+      <v-card-text class="title">
+        <v-layout align-start justify-space-between>
+          <span>{{player.name}}</span>
+          <span :class="player.lastScoreDelta>0 ? 'green--text' : player.lastScoreDelta<0 ? 'red--text' : 'gray--text'">
+            <v-icon>{{player.lastScoreDelta>0 ? 'trending_up' : player.lastScoreDelta<0 ? 'trending_down' : 'trending_flat'}}</v-icon>
+            {{player.lastScoreDelta}}
+          </span>
+        </v-layout>
+      </v-card-text>
+    </v-card>
+  </v-flex>
+</script>
+
+<script type="text/javascript">
+  const fanMap = [1, 2, 4, 8, 16, 16, 16, 32, 32, 32, 64, 64, 64]
+
+  // Globally register scoreboard component
+  Vue.component('PlayerCard', {
+    props: ['player'],
+    template: '#playerCardTemplate'
+  })
+
+  // Main App
+  new Vue({
+    el: '#app',
+    data() {
+      return {
+        isNameEntryDone: false,
+        roundCounter:0,
+        players: [
+          { id: 1, name: '', score: 1000, isWinner: null, isLoser: null, lastScoreDelta:0 },
+          { id: 2, name: '', score: 1000, isWinner: null, isLoser: null, lastScoreDelta:0 },
+          { id: 3, name: '', score: 1000, isWinner: null, isLoser: null, lastScoreDelta:0 },
+          { id: 4, name: '', score: 1000, isWinner: null, isLoser: null, lastScoreDelta:0 }
+        ],
+        selectedWinner: null,
+        selectedLoser: null,
+        selectedFan: null,
+        dialog: false,
+        scoreHistory: []
+      }
+    },
+    computed: {
+      headers(){
+        return [
+          {
+            text: 'Round',
+            align: 'left',
+            sortable: false,
+            value: 'round'
+          },
+          { text: this.players[0].name, value: 'player 1' },
+          { text: this.players[1].name, value: 'player 2' },
+          { text: this.players[2].name, value: 'player 3' },
+          { text: this.players[3].name, value: 'player 4' },
+          { text: '', sortable: false, align:'right', value: '' }
+        ]
+      },
+      title(){
+        let title = 'Tap a Winner'
+        if (this.selectedWinner != null) {
+          title = 'Tap a Loser, or tap same winner for self-drawn'
+        }
+        return title
+      },
+      totalScore(){
+        return this.players.reduce((p,c) => p+c.score , 0)
+      }
+    },
+    methods: {
+      selectPlayer(player){
+        if (this.selectedWinner === null) {
+          this.selectedWinner = player
+
+          const index = this.players.findIndex(e => e.id == player.id)
+          this.players[index].isWinner = true
+        } else if (this.selectedLoser === null) {
+          if (player.id != this.selectedWinner.id) {
+            this.selectedLoser = player
+
+            const index = this.players.findIndex(e => e.id == player.id)
+            this.players[index].isLoser = true
+          }
+
+          //open modal
+          this.dialog = true
+        }
+      },
+      scoreRound() {
+        // Update chips & display
+        const baseWin = fanMap[this.selectedFan] || 64
+
+        this.scoreHistory.push({
+          round: this.roundCounter++,
+          p1score: this.players[0].score,
+          p2score: this.players[1].score,
+          p3score: this.players[2].score,
+          p4score: this.players[3].score
+        })
+
+        for (const p of this.players) {
+          // Calculate winnings and adjust chips
+          if (this.selectedWinner.id == p.id) {
+            p.lastScoreDelta = baseWin * (this.selectedLoser != null ? 4 : 6)
+          } else {
+            p.lastScoreDelta = (baseWin * (this.selectedLoser == null || this.selectedLoser.id == p.id ? 2 : 1)) * -1
+          }
+
+          p.score += p.lastScoreDelta
+
+          p.isLoser = null
+          p.isWinner = null
+        }
+
+        //reset display
+        this.selectedWinner = null
+        this.selectedLoser = null
+        this.selectedFan = null
+      }
+    },
+
+    /*
+    * Same as
+    * <div>
+    *   <ScoreboardComponent/>
+    *   <ScoreFormComponent>
+    * </div>
+
+    render(h) {
+      return h('div', {}, [
+        h('ScoreboardComponent', {
+          props: {
+            players: this.players
+          }
+        }),
+        h('ScoreFormComponent', {
+          props: {
+            players: this.players,
+            on:{
+              'scoreRound': (e) => {
+                console.log('plo')
+              }
+            }
+          }
+        })
+      ])
+    }
+    */
+    template: '#appTemplate'
+  })
+</script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    * { margin:0; padding:0; font-family: Verdana, Geneva, Tahoma, sans-serif; }
+
+    #scoreboard { width:800px; margin:50px auto; }
+
+    #scoreboard td { text-align:center; vertical-align:center; padding:10px 20px; font-size:5em; }
+
+    #nameDisp td input { border:solid 1px #eee; text-align:center; font-size:.5em; }
+
+    #scoreForm { width:800px; margin:0 auto; text-align:center; }
+    #scoreForm select { margin-right:30px; font-size:1.5em; }
+    #scoreForm input { font-size:1.5em; }
+
+    #scoreButton { font-size:2em; padding:15px 40px; margin-top:70px; }
+
+  </style>
+</head>
+<body>
+
+
+<table id="scoreboard">
+  <tr id="scoreDisp">
+    <td>1000</td>
+    <td>1000</td>
+    <td>1000</td>
+    <td>1000</td>
+  </tr>
+  <tr id="nameDisp">
+    <td><input id="0" type="text" onkeyup="updateLists(this)"></td>
+    <td><input id="1" type="text" onkeyup="updateLists(this)"></td>
+    <td><input id="2" type="text" onkeyup="updateLists(this)"></td>
+    <td><input id="3" type="text" onkeyup="updateLists(this)"></td>
+  </tr>
+</table>
+
+<div id="scoreForm">
+  Winner:
+  <select name="" id="winner">
+    <option value="">Choose</option>
+    <option value="0"></option>
+    <option value="1"></option>
+    <option value="2"></option>
+    <option value="3"></option>
+  </select>
+
+  Loser:
+  <select name="" id="loser">
+    <option value="">Choose</option>
+    <option value="all">All</option>
+    <option value="0"></option>
+    <option value="1"></option>
+    <option value="2"></option>
+    <option value="3"></option>
+  </select>
+
+  Points: <input type="text" id="fan">
+
+  <br>
+
+  <input id="scoreButton" type="button" value="Score" onclick="scoreRound()">
+</div>
+
+<script>
+const fanMap = [1, 2, 4, 8, 16, 16, 16, 32, 32, 32, 64, 64, 64]
+
+const scores = [1000, 1000, 1000, 1000]
+const scoreDisp = document.getElementById('scoreDisp')
+const winnerSelect = document.getElementById('winner')
+const loserSelect = document.getElementById('loser')
+const fanInput = document.getElementById('fan')
+
+function updateLists(e){
+  const userIndex = e.id
+  const userName = e.value
+
+  winnerSelect.querySelector(`[value="${userIndex}"]`).innerHTML = userName
+  loserSelect.querySelector(`[value="${userIndex}"]`).innerHTML = userName
+}
+
+function scoreRound(n) {
+  const winnerIndex = winnerSelect.value
+  const loserIndex = loserSelect.value
+  const fan = parseInt(fanInput.value)
+
+  if (!winnerIndex) {
+    alert ('Please select a Winner')
+    return
+  }
+
+  if (!loserIndex) {
+    alert ('Please select a Loser')
+    return
+  }
+
+  if (winnerIndex == loserIndex) {
+    alert('Winner cannot be the same as Loser!')
+    return
+  }
+
+  if (isNaN(fan) || fan<0 || fan>12){
+    alert('Enter a valid point value (0-12)')
+    return
+  }
+
+
+  const baseWin = fanMap[fan] || 64
+
+  // Update chips & display
+  for (let i=0; i<scores.length; ++i) {
+    // Calculate winnings and adjust chips
+    if (i == winnerIndex) {
+      scores[i] += baseWin * (loserIndex != undefined ? 4 : 6)
+    } else {
+      scores[i] -= baseWin * (loserIndex == i || loserIndex == 'all' ? 2 : 1)
+    }
+
+    // Update display
+    scoreDisp.children[i].innerHTML = scores[i]
+  }
+
+  // Reset form
+  winnerSelect.selectedIndex = 0
+  loserSelect.selectedIndex = 0
+  fanInput.value = ''
+}
+</script>
+
+
+
+
+</body>
+</html>
